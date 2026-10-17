@@ -1,0 +1,26 @@
+name: List a room
+description: Put a public decomp.wtf room on the list (decomp.wtf fills this in from the room's Team tab)
+title: List a room
+labels: [listing]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        decomp.wtf filled in the listing below, signed with your room's key. Submit the issue: the list checks that
+        the room answers with that key and is public, adds it, and answers here within a few minutes.
+  - type: textarea
+    id: listing
+    attributes:
+      label: Listing
+      description: Starts with decomp.wtf-listing. Don't change it (the room's signature covers all of it).
+    validations:
+      required: true
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: The room's rules
+      options:
+        - label: Everyone in the room uses their own, legally obtained copy of the game. No game files are shared.
+          required: true
+        - label: What the room makes stays with people who own the game.
+          required: true

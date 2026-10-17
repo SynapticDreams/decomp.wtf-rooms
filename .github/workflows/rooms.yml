@@ -1,0 +1,66 @@
+# Keeps rooms.json: lists and unlists rooms from issues, and looks at every listed room again every six hours.
+# Issue text is untrusted: tools/rooms.py reads it from the event file, never from this workflow's expressions.
+name: rooms
+
+on:
+  issues:
+    types: [opened]
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: rooms
+  cancel-in-progress: false
+
+jobs:
+  rooms:
+    if: github.event_name != 'issues' || contains(github.event.issue.body, 'decomp.wtf-listing:')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: List or unlist the issue's room
+        if: github.event_name == 'issues'
+        run: python tools/rooms.py issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # reads hosts' gists
+      - name: Look at every listed room again
+        if: github.event_name != 'issues'
+        run: python tools/rooms.py check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # reads hosts' gists
+      - name: Keep the list
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add rooms.json ledger.json
+          if ! git diff --cached --quiet; then
+            git commit -q -m "Rooms: ${{ github.event_name == 'issues' && 'a listing' || 'checked again' }}"
+            git pull -q --rebase
+            git push -q
+          fi
+      - name: Answer the issue
+        if: github.event_name == 'issues'
+        run: python tools/rooms.py reply
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt pytest
+      - run: python -m pytest -q

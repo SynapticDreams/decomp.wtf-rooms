@@ -1,0 +1,12 @@
+name: Unlist a room
+description: Take a room off the list (decomp.wtf fills this in from the room's Team tab)
+title: Unlist a room
+labels: [listing]
+body:
+  - type: textarea
+    id: listing
+    attributes:
+      label: Unlisting
+      description: Starts with decomp.wtf-listing, signed with the room's key. Don't change it.
+    validations:
+      required: true
